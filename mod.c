@@ -116,3 +116,143 @@ void memInfo(void)
 		
 		printk("Start address of arguments: 0x%lx\n", m-> arg_start);
 		printk("End address of arguments: 0x%lx\n", m-> arg_end);
+		
+			//unsigned long s_arg = m-> arg_end - m-> arg_start;
+		
+		printk("The size of the arguments is 0x%lx\n" , m-> arg_end - m-> arg_start);
+		
+		printk("\n");
+		
+		
+		printk("===== STACK INFORMATION ===== \n\n");
+		
+		//printk("Start address of stack: 0x%lx\n", m-> start_stack);
+		m = t -> mm ;
+		unsigned long startS = m-> start_stack;
+		unsigned long S_size = 0;
+		v =  t -> mm -> mmap;
+
+		
+		while(v -> vm_next != NULL){
+		
+		if(likely(v->vm_flags & VM_STACK)){
+		
+		printk("THE Start address of the stack is: 0x%lx\n", v -> vm_start);
+		unsigned long size = v -> vm_end - v -> vm_start;	
+		
+		printk("The end address of the stack is 0x%lx\n" , v -> vm_end);			
+		
+		S_size = S_size + size;
+		
+		}
+		v = v -> vm_next;
+		}
+		
+		
+		printk("The size of Stack is 0x%lx\n" , S_size);
+		
+		printk("\n");
+		
+		
+		printk("===== NUMBER OF FRAMES INFORMATION ===== \n\n");
+		
+		unsigned long frames = get_mm_rss(m);
+		printk("The number of frames is: 0x%lx\n" , frames);
+		
+		printk("\n");
+		
+		printk("===== OUTER PAGE INFORMATION =====\n\n");
+		
+		pgd_t *pgd;
+		
+		v =  t -> mm -> mmap;
+		//printk("The VM Starting address is  0x%lx\n",v -> vm_start);
+		
+		//converting 
+		pgd = pgd_offset(m,v -> vm_start);	
+		unsigned long vm = v -> vm_start; 
+
+
+		int i=0;
+		while( i<512){
+		
+			
+			if (!pgd_none(pgd[i]) || !pgd_bad(pgd[i])){
+			     printk("[%d] -  0x%lx\n",i, pgd[i]); 
+				int pd = pgd_val(pgd[i]);
+
+
+
+
+				long long bit  = pd & 1;
+				long long bit1 = (pd & 2)>> 1;
+				long long bit2 = (pd & 4)>> 2;
+				long long bit3 = (pd & 8)>> 3;
+				long long bit4 = (pd & 16)>> 4;
+				long long  bit5 = (pd & 32)>> 5;
+				//int bit6 = (pd & 64)>> 6;
+				long long bit7 = (pd & 128)>>7;
+				long long pa = (pd & 4503599627366400) >>12;
+				long long reserved = (pd & 4503599627370496) >>52 ;//0000000000001000000000000000000000000000000000000000000000000000
+				long long xd = pd >>63;
+
+
+
+
+				printk("| P    %10d |",bit  );
+				printk("| R/W  %10d |",bit1 );
+				printk("| U/S  %10d |",bit2 );
+				printk("| PWT  %10d |",bit3 );
+				printk("| PCD  %10d |",bit4 );
+				printk("| A    %10d |",bit5 );
+				printk("| PS   %10d |",bit7 );
+				printk("| PA      0x%lx |",pa );
+				printk("| Reserved %6d |", reserved);
+				printk("| XD   %10d |", xd);
+				
+				
+				printk ("===================");
+			}
+			     
+			//  vm = vm + PG_AD;
+			 
+			 //pgd = pgd_offset(m,vm);
+		
+				 i++;
+		}
+		
+		
+	}
+	else
+	{
+		printk("ID not found\n");
+	}
+
+}
+
+
+
+int i_mod(void)
+{
+  
+	struct task_struct *task;
+	task = &init_task;
+	printk("\n\n"); 
+	memInfo();
+	return 0;	
+}
+
+	
+	
+void e_mod(void)
+{
+	printk("Done\n");
+}
+
+module_init(i_mod);
+module_exit(e_mod);
+
+MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("[Kernel Module for Memory Management]");
+MODULE_AUTHOR("Elena Cina & Eniselda Tusku");
+
